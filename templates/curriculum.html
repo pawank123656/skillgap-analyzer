@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Curriculum gap{% endblock %}
+{% block body %}
+<h1>Curriculum vs. industry gap</h1>
+<p class="sub">Paste a course's syllabus (subject and topic names). We check which industry skills it never mentions.</p>
+<p class="tabs">{% for k, v in COURSES.items() %}<a class="{{ 'on' if k==course }}" href="{{ url_for('admin_curriculum', course=k) }}">{{ v }}</a>{% endfor %}</p>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="course" value="{{ course }}">
+  <textarea name="syllabus" rows="9" placeholder="Paste syllabus text here...">{{ row['text'] if row else '' }}</textarea>
+  <p><button class="btn">Save and analyse</button></p>
+</form>
+{% if res %}
+<div class="grid g2">
+  <div class="card stat"><div class="big">{{ res.coverage }}%</div><div class="t">of industry skills appear in the syllabus</div></div>
+  <div class="card"><h2>Not covered by the syllabus</h2>
+    {% if res.uncovered %}<table><tr><th>Skill</th><th>Industry demand</th></tr>
+    {% for u in res.uncovered %}<tr><td>{{ u.skill }}</td><td>{{ u.demand }}</td></tr>{% endfor %}</table>
+    <p class="small mute">Demand = total importance weight of the skill across all roles for this course.</p>
+    {% else %}<p class="mute">Every catalog skill is mentioned.</p>{% endif %}</div>
+</div>
+<div class="card"><h2>Covered</h2>{% for c in res.covered %}<span class="pill Strong" title="matched: {{ c.hits|join(', ') }}">{{ c.skill }}</span> {% endfor %}</div>
+{% endif %}
+{% endblock %}

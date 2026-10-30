@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block body %}
+<div class="narrow card">
+  <h1>Create your account</h1>
+  <p class="sub">Takes a minute. You choose your target role next.</p>
+  <form method="post">
+    <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+    <label>Full name</label><input name="name" required value="{{ request.form.get('name','') }}">
+    <label>Email</label><input type="email" name="email" required value="{{ request.form.get('email','') }}">
+    <label>Course</label>
+    <select name="course" required>
+      <option value="">Select your course</option>
+      {% for k, v in COURSES.items() %}<option value="{{ k }}" {{ 'selected' if request.form.get('course')==k }}>{{ v }}</option>{% endfor %}
+    </select>
+    <label>College (optional)</label><input name="college" value="{{ request.form.get('college','') }}">
+    <div class="grid g2">
+      <div><label>Graduation year</label><input type="number" name="grad_year" min="2020" max="2035" placeholder="2027"></div>
+      <div><label>CGPA / 10 (optional)</label><input type="number" name="cgpa" step="0.01" min="0" max="10"></div>
+    </div>
+    <label>Password (min 8 characters)</label><input type="password" name="password" required minlength="8">
+    <label>Confirm password</label><input type="password" name="confirm" required minlength="8">
+    <p><button class="btn" style="width:100%">Create account</button></p>
+  </form>
+  <p class="small mute">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block body %}
+<div class="hero-card">
+  <div>
+    <h1>Welcome back, {{ g.user['name'].split()[0] }} </h1>
+    <p>{{ COURSES[g.user['course']] }} · target role <b>{{ g.user['target_role'] }}</b> · <a href="{{ url_for('select') }}">change</a></p>
+    <a class="btn white" href="{{ nxt[1] }}">{{ nxt[0] }} →</a>
+    <p class="small" style="margin:10px 0 0">{{ nxt[2] }}</p>
+  </div>
+  <div class="ringwrap"><div class="ring" style="--p:{{ gap.readiness }}"></div><span class="rv"><span><span data-count="{{ gap.readiness|round|int }}">{{ gap.readiness|round|int }}</span>%<small>job ready</small></span></span></div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="l">Readiness trend</div><div class="v">{% if delta is none %}—{% else %}<span class="{{ 'up' if delta >= 0 else 'down' }}">{{ '+' if delta > 0 }}{{ delta }}</span>{% endif %}</div><div class="small mute">points since first check</div></div>
+  <div class="kpi"><div class="l">Resume score</div><div class="v">{{ resume['score'] if resume else '—' }}</div><div class="small mute">{% if resume %}out of 100{% else %}<a href="{{ url_for('resume') }}">Upload resume</a>{% endif %}</div></div>
+  <div class="kpi"><div class="l">Skills verified</div><div class="v">{{ quizzed }}<span class="mute" style="font-size:16px"> / {{ total_skills }}</span></div><div class="small mute">checked by quiz</div></div>
+  <div class="kpi"><div class="l">Roadmap</div><div class="v">{{ plan_done }}<span class="mute" style="font-size:16px"> / {{ plan_total }}</span></div><div class="small mute">skills done (8-week plan)</div></div>
+</div>
+
+<div class="cols">
+  <div>
+    <div class="card"><h2>Readiness over time</h2>
+      {% if snaps|length > 1 %}<canvas id="hist" height="110"></canvas>
+      {% else %}<p class="mute">Your timeline appears once your readiness changes, for example after retaking the quiz.</p>{% endif %}</div>
+    <div class="card"><h2>Focus areas</h2>
+      {% if critical %}{% for r in critical[:5] %}
+      <div style="margin:12px 0"><div class="small" style="display:flex;justify-content:space-between"><b>{{ r.skill }}</b><span class="mute">level {{ r.level }} / needs {{ r.required }}</span></div>
+        <div class="bar"><i style="width:{{ [100 * r.level / r.required, 100]|min }}%;background:var(--bad)"></i></div></div>
+      {% endfor %}<a class="btn sm ghost" href="{{ url_for('roadmap') }}">Open roadmap</a>
+      {% else %}<p class="mute">No critical gaps right now{% if rated == 0 %}. Complete the self-assessment to see your real picture{% endif %}.</p>{% endif %}</div>
+  </div>
+  <div>
+    <div class="card"><h2>Best-fit roles</h2>
+      {% for role, pct in alt %}<div style="margin:10px 0"><div class="small" style="display:flex;justify-content:space-between"><span>{{ role }}</span><b>{{ pct }}%</b></div><div class="bar"><i style="width:{{ pct }}%"></i></div></div>{% endfor %}
+      <a class="small" href="{{ url_for('gap') }}">Full gap analysis →</a></div>
+    <div class="card"><h2> Study streak: <span class="grad">{{ streak }} day{{ '' if streak == 1 else 's' }}</span></h2>
+      <div class="heat">{% for c in cells %}<i class="{{ 'l3' if c.n >= 3 else 'l2' if c.n == 2 else 'l1' if c.n == 1 }}" title="{{ c.d }}: {{ c.n }} actions"></i>{% endfor %}</div>
+      <p class="small mute" style="margin:8px 0 0">Last 12 weeks. Quiz, assessment, roadmap and interview actions count.</p></div>
+    <div class="card"><h2>Achievements</h2>
+      <div class="bdgs">{% for b in badges %}<div class="bdg {{ 'on' if b.got else 'off' }}"><span class="e">{{ b.icon }}</span><b>{{ b.name }}</b>{{ b.desc }}</div>{% endfor %}</div></div>
+    <div class="card"><h2>Profile strength</h2>
+      <div class="small" style="display:flex;justify-content:space-between"><span class="mute">Completed</span><b>{{ completion }}%</b></div><div class="bar"><i style="width:{{ completion }}%"></i></div>
+      <p class="small" style="margin:10px 0 0"><a href="{{ url_for('profile') }}">{{ 'Review your profile' if completion == 100 else 'Complete your profile' }} →</a></p></div>
+  </div>
+</div>
+<script>
+const h = {{ history|safe }};
+if (h.length > 1) new Chart(document.getElementById('hist'), {type:'line',
+  data:{labels:h.map(x=>x.t),datasets:[{label:'Readiness %',data:h.map(x=>x.v),borderColor:'#7c7cff',backgroundColor:'#7c7cff22',fill:true,tension:.3,pointRadius:3}]},
+  options:{scales:{y:{min:0,max:100}},plugins:{legend:{display:false}}}});
+</script>
+{% endblock %}

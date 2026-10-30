@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Skill gap report{% endblock %}
+{% block body %}
+<p class="noprint"><button class="btn" onclick="window.print()">Print / Save as PDF</button></p>
+<h1>Skill Gap Report</h1>
+<p class="sub">{{ g.user['name'] }} &middot; {{ COURSES[g.user['course']] }}{% if g.user['college'] %} &middot; {{ g.user['college'] }}{% endif %} &middot; target role: {{ g.user['target_role'] }} &middot; {{ today }}</p>
+
+<div class="card"><h2>Summary</h2>
+  <p>Job readiness: <b>{{ gp.readiness }}%</b> (gap score {{ gp.gap_score }}).
+  {% if d %}Resume score: <b>{{ d.score }}/100</b>.{% else %}No resume uploaded.{% endif %}</p></div>
+
+<div class="card"><h2>Skill gaps</h2>
+<table><tr><th>Skill</th><th>Level</th><th>Required</th><th>Gap</th><th>Status</th></tr>
+{% for r in rows %}<tr><td>{{ r.skill }}</td><td>{{ r.level }}</td><td>{{ r.required }}</td><td>{{ r.gap }}</td><td>{{ r.status }}</td></tr>{% endfor %}</table></div>
+
+<div class="card"><h2>8-week plan</h2>
+{% for p in plan %}<p><b>{{ 'Week ' ~ p.start if p.weeks == 1 else 'Weeks ' ~ p.start ~ '-' ~ p.end }}:</b> {{ p.skill }} (level {{ p.from }} to {{ p.to }})</p>{% else %}<p>No gaps to close.</p>{% endfor %}</div>
+
+{% if d and d.tips %}<div class="card"><h2>Resume suggestions</h2><ul class="clean">{% for t in d.tips %}<li>{{ t }}</li>{% endfor %}</ul></div>{% endif %}
+
+<div class="card"><h2>Role fit</h2><table>{% for role, pct in alt %}<tr><td>{{ role }}</td><td>{{ pct }}%</td></tr>{% endfor %}</table></div>
+{% endblock %}

@@ -1,0 +1,3 @@
+{% set order = [('select','Role'),('assess','Assess'),('quiz','Quiz'),('resume','Resume'),('gap','Results')] %}
+{% set keys = order|map(attribute=0)|list %}{% set ci = keys.index(request.endpoint) if request.endpoint in keys else -1 %}
+<ol class="steps">{% for k, l in order %}<li class="{{ 'done' if loop.index0 < ci else 'now' if loop.index0 == ci }}"><span>{{ '' if loop.index0 < ci else loop.index }}</span>{{ l }}</li>{% endfor %}</ol>

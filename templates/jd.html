@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Job match{% endblock %}
+{% block body %}
+<h1>Job description match</h1>
+<p class="sub">Paste any real job posting. We find the skills it asks for and compare them to your profile (a skill counts as "have" at level 3 or above).</p>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <textarea name="jd" rows="9" placeholder="Paste the job description here...">{{ text or '' }}</textarea>
+  <p><button class="btn">Analyse job description</button></p>
+</form>
+{% if res %}
+<div class="grid g2">
+  <div class="card stat"><div class="big">{{ res.match }}%</div><div class="t">match with this job</div></div>
+  <div class="card"><h2>Skills this job asks for</h2>
+    {% if res.required %}<table>{% for r in res.required %}<tr><td>{{ r.skill }}</td><td>level {{ r.level }}</td>
+    <td><span class="pill {{ 'Strong' if r.have else 'Critical' }}">{{ 'Have' if r.have else 'Gap' }}</span></td></tr>{% endfor %}</table>
+    {% else %}<p class="mute">No skills from the {{ COURSES[g.user['course']] }} catalog were detected in this text.</p>{% endif %}</div>
+</div>
+{% if res.missing %}<div class="card"><h2>To improve your chances</h2><ul class="clean">
+  <li>Close these gaps first: <b>{{ res.missing|join(', ') }}</b> (see your <a href="{{ url_for('roadmap') }}">roadmap</a>).</li>
+  {% if res.has_resume and res.resume_missing %}<li>Your resume does not mention: {{ res.resume_missing|join(', ') }}. If you do have these skills, add the keywords to your resume for this application.</li>{% endif %}
+  {% if not res.has_resume %}<li><a href="{{ url_for('resume') }}">Upload your resume</a> to get keyword suggestions for this job.</li>{% endif %}
+</ul></div>{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Gap analysis{% endblock %}
+{% block body %}
+{% include "_steps.html" %}
+<h1>Gap analysis: {{ g.user['target_role'] }}</h1>
+<p class="sub">Gap Score = &Sigma;(weight &times; shortfall) / &Sigma;(weight &times; required level). Job Readiness = 100 &times; (1 &minus; Gap Score).</p>
+
+<div class="grid g2">
+  <div class="card stat">
+    <div class="big" style="color:{{ 'var(--ok)' if gp.readiness>=70 else 'var(--warn)' if gp.readiness>=45 else 'var(--bad)' }}">{{ gp.readiness }}%</div>
+    <div class="t">Job readiness &middot; gap score {{ gp.gap_score }}</div>
+    <p class="small mute">Strong: {{ rows|selectattr('status','equalto','Strong')|list|length }} &middot;
+    Moderate: {{ rows|selectattr('status','equalto','Moderate')|list|length }} &middot;
+    Critical: {{ rows|selectattr('status','equalto','Critical')|list|length }}</p>
+  </div>
+  <div class="card"><h2>You vs. industry requirement</h2><canvas id="radar"></canvas></div>
+</div>
+
+<div class="card"><h2>Skill-by-skill</h2>
+<table><tr><th>Skill</th><th>Your level</th><th>Required</th><th>Gap</th><th>Status</th><th>Evidence</th></tr>
+{% for r in rows %}
+<tr><td><b>{{ r.skill }}</b><div class="small mute">importance {{ r.weight }}/3</div></td>
+<td>{{ r.level }}</td><td>{{ r.required }}</td><td>{{ r.gap }}</td>
+<td><span class="pill {{ r.status }}">{{ r.status }}</span></td>
+<td class="small mute">{% set lv = levels[r.skill] %}self {{ lv.self|int }}{% if lv.quiz is not none %}, quiz {{ '%.1f'|format(lv.quiz) }}{% else %}, <i>not verified</i>{% endif %}{% if lv.resume %}, on resume{% endif %}</td></tr>
+{% endfor %}</table></div>
+
+<div class="card"><h2>Gap by skill</h2><canvas id="bars" height="{{ 40 + rows|length * 22 }}"></canvas></div>
+
+<div class="grid g2">
+<div class="card"><h2>What-if simulator</h2>
+  <p class="small mute">Tick the skills you plan to learn up to the required level and see your readiness change.</p>
+  <div id="sim"></div>
+  <p style="margin-top:12px">Readiness now: <b>{{ gp.readiness }}%</b> &rarr; if you learn these: <b id="simres" style="font-size:22px;color:var(--brand)">{{ gp.readiness }}%</b></p></div>
+<div class="card"><h2>Best-fit roles for your skills</h2>
+  {% for role, pct in alt %}
+  <div style="margin:8px 0"><div class="small" style="display:flex;justify-content:space-between"><span>{{ role }}{% if role == g.user['target_role'] %} <span class="pill mute">your target</span>{% endif %}</span><span>{{ pct }}%</span></div>
+  <div class="bar"><i style="width:{{ pct }}%"></i></div></div>
+  {% endfor %}
+  {% if alt[0][0] != g.user['target_role'] %}<p class="small mute">Your current skills fit <b>{{ alt[0][0] }}</b> better than your target. Consider it as a backup.</p>{% endif %}
+</div></div>
+<p class="noprint"><a class="btn" href="{{ url_for('roadmap') }}">Build my roadmap</a> <a class="btn ghost" href="{{ url_for('report') }}">Printable report</a></p>
+
+<script>
+const sim = {{ sim|safe }};
+const labels = sim.map(s=>s.skill);
+new Chart(document.getElementById('radar'), {type:'radar',
+  data:{labels, datasets:[
+    {label:'Required', data:sim.map(s=>s.req), borderColor:'#d6336c', backgroundColor:'#d6336c22'},
+    {label:'You', data:sim.map(s=>s.lvl), borderColor:'#3b5bdb', backgroundColor:'#3b5bdb33'}]},
+  options:{scales:{r:{min:0,max:5,ticks:{stepSize:1}}}}});
+const gaps = sim.map(s=>Math.max(0, s.req - s.lvl));
+new Chart(document.getElementById('bars'), {type:'bar',
+  data:{labels, datasets:[{label:'Gap (levels short)', data:gaps,
+    backgroundColor:gaps.map(g=>g===0?'#2b8a3e':g<2?'#e8890c':'#d6336c')}]},
+  options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{min:0,max:5}}}});
+
+const box = document.getElementById('sim');
+sim.filter(s=>s.lvl < s.req).forEach((s,i)=>{
+  const d=document.createElement('label'); d.className='chk'; d.style.fontWeight=500;
+  d.innerHTML=`<input type="checkbox" data-i="${sim.indexOf(s)}"> ${s.skill} <span class="small mute">(${s.lvl} &rarr; ${s.req})</span>`;
+  box.appendChild(d);
+});
+if(!box.children.length) box.innerHTML='<p class="mute">No gaps to close. You meet every requirement.</p>';
+function calc(){
+  const pick=new Set([...box.querySelectorAll('input:checked')].map(x=>+x.dataset.i));
+  let num=0, den=0;
+  sim.forEach((s,i)=>{const lv=pick.has(i)?s.req:s.lvl; num+=s.w*Math.max(0,s.req-lv); den+=s.w*s.req;});
+  document.getElementById('simres').textContent=(100*(1-num/den)).toFixed(1)+'%';
+}
+box.addEventListener('change',calc);
+</script>
+{% endblock %}

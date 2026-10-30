@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Course & Role{% endblock %}
+{% block body %}
+{% include "_steps.html" %}
+<h1>Choose your course and target role</h1>
+<p class="sub">Your gap is measured against the skills this role demands. You can change this any time.</p>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  <label>Course</label>
+  <select name="course" id="course">
+    {% for k, v in COURSES.items() %}<option value="{{ k }}" {{ 'selected' if g.user['course']==k }}>{{ v }}</option>{% endfor %}
+  </select>
+  <label>Target role</label>
+  <select name="target_role" id="role" required></select>
+  <p><button class="btn">Save and continue</button></p>
+</form>
+<script>
+const roles = {{ roles|tojson }};
+const current = {{ (g.user['target_role'] or '')|tojson }};
+const c = document.getElementById('course'), r = document.getElementById('role');
+function fill(){ r.innerHTML=''; roles[c.value].forEach(x=>{const o=new Option(x,x); if(x===current)o.selected=true; r.add(o);}); }
+c.addEventListener('change', fill); fill();
+</script>
+{% endblock %}

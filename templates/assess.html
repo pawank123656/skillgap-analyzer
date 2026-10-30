@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Self-assessment{% endblock %}
+{% block body %}
+{% include "_steps.html" %}
+<h1>Self-assessment</h1>
+<p class="sub">Rate yourself honestly from 0 to 5. Skills your target role (<b>{{ g.user['target_role'] }}</b>) needs are marked.</p>
+<p class="small mute">0 = none &nbsp; 1 = heard of it &nbsp; 2 = basics &nbsp; 3 = can do with some help &nbsp; 4 = comfortable &nbsp; 5 = can teach others</p>
+<form method="post">
+  <input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+  {% for cat, names in groups.items() %}
+  <div class="card"><h2>{{ cat }}</h2>
+    {% for n in names %}
+    <div style="padding:8px 0;border-top:1px solid var(--line)">
+      <b>{{ n }}</b>
+      {% if n in reqs %}<span class="pill mute">needed: level {{ reqs[n][0] }}</span>{% endif %}
+      <div class="rate" style="margin-top:6px">
+        {% for v in range(0, 6) %}<label><input type="radio" name="s_{{ n }}" value="{{ v }}" {{ 'checked' if current.get(n, 0)==v }}>{{ v }}</label>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+  <button class="btn">Save and take the quiz</button>
+</form>
+{% endblock %}

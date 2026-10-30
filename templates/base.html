@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Skill Gap Analyzer{% endblock %} · SkillGap</title>
+<script>try{var t=localStorage.getItem('sg-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>if(window.Chart){var cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--mute').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();}</script>
+</head>
+{% macro nv(ep, label, icon) %}<a class="nv {{ 'on' if request.endpoint == ep }}" href="{{ url_for(ep) }}"><span class="ic">{{ icon }}</span>{{ label }}</a>{% endmacro %}
+<body>
+{% if g.user %}
+<aside>
+  <a class="brand" href="{{ url_for('index') }}">SkillGap</a>
+  {% if g.user['role'] == 'student' %}
+    <div class="grp">Overview</div>{{ nv('dashboard','Dashboard','') }}{{ nv('profile','My Profile','') }}
+    <div class="grp">Build your profile</div>{{ nv('select','Course & Role','') }}{{ nv('assess','Self-assessment','') }}{{ nv('quiz','Skill Quiz','') }}{{ nv('resume','Resume','') }}
+    <div class="grp">Results</div>{{ nv('gap','Gap Analysis','') }}{{ nv('roadmap','Roadmap','') }}{{ nv('jd','Job Match','') }}{{ nv('report','Report','') }}
+    <div class="grp">Career</div>{{ nv('tracker','Applications','') }}{{ nv('interview','Mock Interview','') }}{{ nv('coach','AI Coach','') }}
+    <div class="grp">Insights</div>{{ nv('compare','Compare Courses','') }}
+  {% else %}
+    <div class="grp">Placement cell</div>{{ nv('admin','Cohort Analytics','') }}{{ nv('admin_curriculum','Curriculum Gap','') }}{{ nv('compare','Compare Courses','') }}{{ nv('profile','My Account','') }}
+  {% endif %}
+  <div style="height:16px"></div>
+  <a class="me" href="{{ url_for('profile') }}"><span class="av">{{ initials(g.user['name']) }}</span><span class="grow"><b>{{ g.user['name'] }}</b><small>{{ COURSES[g.user['course']] if g.user['course'] else 'Administrator' }}</small></span></a>
+  <form method="post" action="{{ url_for('logout') }}"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><button class="link">Log out</button></form>
+</aside>
+{% endif %}
+<div class="{{ 'shell' if g.user }}">
+  {% if g.user %}
+  <header class="top"><button class="icon" id="menu" aria-label="Menu">Menu</button><b>{{ self.title() }}</b><span class="sp"></span>
+    <button class="icon" id="kbtn" title="Search (Ctrl+K)">Search</button><button class="icon" id="theme" aria-label="Toggle dark mode">Theme</button><a class="av" href="{{ url_for('profile') }}" title="My profile">{{ initials(g.user['name']) }}</a></header>
+  {% else %}
+  <nav class="pubnav"><a class="brand" href="{{ url_for('index') }}">SkillGap</a><span class="sp"></span>
+    <button class="icon" id="theme" aria-label="Toggle dark mode">Theme</button><a href="{{ url_for('login') }}">Log in</a><a class="btn sm" href="{{ url_for('signup') }}">Sign up</a></nav>
+  {% endif %}
+  <main>
+    <div id="toasts">{% for cat, msg in get_flashed_messages(with_categories=true) %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}</div>
+    {% block body %}{% endblock %}
+  </main>
+</div>
+{% if g.user %}<div id="pal" hidden><div class="pbox"><input id="pi" placeholder="Jump to...  (Esc to close)" autocomplete="off"><div id="pl"></div></div></div>{% endif %}
+<script>
+(function(){const pal=document.getElementById('pal');if(!pal)return;const L=[...document.querySelectorAll('aside .nv')].map(a=>({t:a.textContent.trim(),h:a.href})),pi=document.getElementById('pi'),pl=document.getElementById('pl');let sel=0,list=[];
+function draw(){const q=pi.value.toLowerCase();list=L.filter(l=>l.t.toLowerCase().includes(q));sel=Math.min(sel,Math.max(list.length-1,0));pl.innerHTML=list.map((l,k)=>`<a href="${l.h}" class="${k==sel?'on':''}">${l.t}</a>`).join('')||'<p class="mute small" style="padding:12px">No match</p>'}
+function open(){pal.hidden=false;pi.value='';sel=0;draw();pi.focus()}
+document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();pal.hidden?open():pal.hidden=true}else if(!pal.hidden){if(e.key==='Escape')pal.hidden=true;else if(e.key==='ArrowDown'){sel=Math.min(sel+1,list.length-1);draw();e.preventDefault()}else if(e.key==='ArrowUp'){sel=Math.max(sel-1,0);draw();e.preventDefault()}else if(e.key==='Enter'&&list[sel])location.href=list[sel].h}});
+pi.addEventListener('input',()=>{sel=0;draw()});pal.addEventListener('click',e=>{if(e.target===pal)pal.hidden=true});document.getElementById('kbtn')?.addEventListener('click',open)})();
+document.querySelectorAll('#toasts .flash').forEach(t=>{t.onclick=()=>t.remove();setTimeout(()=>t.remove(),6000)});
+document.querySelectorAll('[data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now();(function f(t){const p=Math.min((t-t0)/900,1);el.textContent=Math.round(to*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(f)})(t0)});
+window.confetti=function(){const c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:99';c.width=innerWidth;c.height=innerHeight;document.body.appendChild(c);const x=c.getContext('2d'),P=Array.from({length:120},()=>({x:Math.random()*c.width,y:-20,v:2+Math.random()*4,s:4+Math.random()*6,c:`hsl(${Math.random()*360},80%,60%)`,r:Math.random()*6}));let n=0;(function f(){x.clearRect(0,0,c.width,c.height);P.forEach(p=>{p.y+=p.v;p.x+=Math.sin(p.r+=.05)*2;x.fillStyle=p.c;x.fillRect(p.x,p.y,p.s,p.s)});if(++n<220)requestAnimationFrame(f);else c.remove()})()};
+document.getElementById('menu')?.addEventListener('click',()=>document.body.classList.toggle('open'));
+document.getElementById('theme')?.addEventListener('click',()=>{const d=document.documentElement,n=d.dataset.theme==='dark'?'light':'dark';d.dataset.theme=n;try{localStorage.setItem('sg-theme',n)}catch(e){}});
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="hero">
+  <h1>Find the gap between your <span class="grad">degree</span> and the <span class="grad">job you want</span></h1>
+  <p>Pick B.Tech CSE, B.Com or BBA, choose a target role, and get a measurable skill gap, a resume score and a week-by-week plan to close it.</p>
+  <a class="btn" href="{{ url_for('signup') }}">Get started free</a> <a class="btn ghost" href="{{ url_for('login') }}">Log in</a>
+</div>
+<div class="grid g3">
+  {% for e, t, d in [('','Skill gap analysis','Radar and bar charts show exactly where you fall short of a role, with a Job Readiness %.'),
+    ('','Verified skills','A short quiz checks your self-ratings so inflated numbers do not skew the result.'),
+    ('','Resume score','Upload a PDF or DOCX and get a score out of 100 with specific fixes.'),
+    ('','Learning roadmap','A 4, 8 or 12-week plan with study links and progress tracking.'),
+    ('','Job match','Paste any job posting and see which required skills you already have.'),
+    ('','Dashboard and badges','Track readiness over time, earn achievements and keep your profile up to date.')] %}
+  <div class="card feat"><div class="e">{{ e }}</div><h3>{{ t }}</h3><p class="mute small" style="margin:0">{{ d }}</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

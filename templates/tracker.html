@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Applications{% endblock %}
+{% block body %}
+<h1>Application tracker</h1>
+<p class="sub">Follow every job from saved to offer. Paste the job description to see how well you match.</p>
+<details class="card"><summary><b>+ Add an application</b></summary>
+  <form method="post"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="add">
+    <div class="grid g2" style="gap:0 16px"><div><label>Company</label><input name="company" required maxlength="100"></div><div><label>Job title</label><input name="title" required maxlength="100"></div></div>
+    <label>Job description (optional, for the match score)</label><textarea name="jd" rows="4"></textarea>
+    <label>Notes</label><input name="notes" maxlength="300" placeholder="Referral, deadline, link...">
+    <p><button class="btn">Add to board</button></p></form></details>
+<div class="board">
+{% for s in statuses %}<div class="col"><h3>{{ s }} <span class="pill mute">{{ cols[s]|length }}</span></h3>
+  {% for a in cols[s] %}<div class="kcard"><b>{{ a['title'] }}</b><div class="small mute">{{ a['company'] }}</div>
+    {% if a['match'] is not none %}<span class="pill {{ 'Strong' if a['match'] >= 70 else 'Moderate' if a['match'] >= 40 else 'Critical' }}">{{ a['match'] }}% match</span>{% endif %}
+    {% if a['notes'] %}<p class="small mute" style="margin:6px 0 0">{{ a['notes'] }}</p>{% endif %}
+    <form method="post"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="move"><input type="hidden" name="id" value="{{ a['id'] }}">
+      <select name="status" onchange="this.form.submit()">{% for t in statuses %}<option {{ 'selected' if t == s }}>{{ t }}</option>{% endfor %}</select></form>
+    <form method="post"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ a['id'] }}"><button class="link">Delete</button></form>
+  </div>{% endfor %}</div>{% endfor %}
+</div>
+{% endblock %}

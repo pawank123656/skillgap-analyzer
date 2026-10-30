@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Mock interview{% endblock %}
+{% block body %}
+<h1>Mock interview</h1>
+<p class="sub">Answer out loud, then score yourself honestly from 1 to 5. Questions are tailored to <b>{{ g.user['target_role'] }}</b>.</p>
+{% if not kind %}
+<div class="grid g2">
+  <a class="card" href="{{ url_for('interview', kind='hr') }}"><h2>HR round</h2><p class="mute small" style="margin:0">Behavioural questions: introduce yourself, teamwork, weaknesses, goals.</p></a>
+  <a class="card" href="{{ url_for('interview', kind='technical') }}"><h2>Technical round</h2><p class="mute small" style="margin:0">Concept and project questions built from the top skills of your target role.</p></a>
+</div>
+{% if hist %}<div class="card"><h2>Recent attempts</h2><table><tr><th>Round</th><th>Self-score</th><th>Questions</th><th>Date</th></tr>
+{% for h in hist %}<tr><td>{{ h['kind']|title }}</td><td><b>{{ h['score'] }}</b> / 5</td><td>{{ h['n'] }}</td><td>{{ h['taken_at'] }}</td></tr>{% endfor %}</table></div>{% endif %}
+{% else %}
+<div class="card">
+  <div class="bar"><i id="pg" style="width:0"></i></div>
+  <div class="small mute" style="display:flex;justify-content:space-between;margin:8px 0"><span id="cnt"></span><span> <b id="tm">0:00</b></span></div>
+  <h2 id="qt" style="font-size:21px"></h2><p class="small mute" id="tip"></p>
+  <textarea rows="4" placeholder="Practise your answer here (not saved)"></textarea>
+  <p class="small mute" style="margin:12px 0 4px">How well did you answer?</p>
+  <div class="rate">{% for v in range(1, 6) %}<label><input type="radio" name="sc" value="{{ v }}">{{ v }}</label>{% endfor %}</div>
+  <p style="margin-bottom:0"><button class="btn" id="nx" disabled>Next</button></p>
+</div>
+<form method="post" id="fin"><input type="hidden" name="_csrf" value="{{ csrf_token() }}"><input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="scores"></form>
+<script>
+const Q={{ qs|tojson }},$=id=>document.getElementById(id);let i=0,t0=Date.now(),sc=[];
+function show(){$('qt').textContent=Q[i].q;$('tip').textContent=' '+Q[i].tip;$('cnt').textContent=`Question ${i+1} of ${Q.length}`;$('pg').style.width=(100*i/Q.length)+'%';
+ $('nx').textContent=i==Q.length-1?'Finish':'Next';$('nx').disabled=true;document.querySelectorAll('[name=sc]').forEach(r=>r.checked=false);document.querySelector('textarea').value='';t0=Date.now()}
+setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$('tm').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},500);
+document.querySelectorAll('[name=sc]').forEach(r=>r.onchange=()=>$('nx').disabled=false);
+$('nx').onclick=()=>{sc.push(+document.querySelector('[name=sc]:checked').value);if(++i<Q.length)show();else{document.querySelector('#fin [name=scores]').value=sc.join(',');$('fin').submit()}};
+show();
+</script>
+{% endif %}
+{% endblock %}

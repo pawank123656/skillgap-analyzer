@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Cohort analytics{% endblock %}
+{% block body %}
+<h1>Placement-cell analytics</h1>
+<p class="sub">Batch-level view of registered students. Use it to decide which training programmes to run.</p>
+<div class="grid g3">
+{% for c, s in stats.items() %}
+  <div class="card"><h2>{{ COURSES[c] }}</h2>
+    <p class="mute small">{{ counts.get(c, 0) }} registered &middot; {{ s.n }} with a target role &middot; avg readiness <b>{{ s.avg }}%</b>{% if s.demo %} &middot; {{ s.demo }} demo{% endif %}</p>
+    <table><tr><th>Skill</th><th>Critical</th><th>Avg gap</th></tr>
+    {% for t in s.top_gaps %}<tr><td>{{ t.skill }}</td><td>{{ t.pct }}%</td><td>{{ t.avg_gap }}</td></tr>
+    {% else %}<tr><td colspan="3" class="mute">No data yet.</td></tr>{% endfor %}</table>
+  </div>
+{% endfor %}
+</div>
+<p><a class="btn" href="{{ url_for('admin_curriculum') }}">Check curriculum vs. industry skills</a></p>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}AI Coach{% endblock %}
+{% block body %}
+<h1>AI career coach</h1>
+<p class="sub">Knows your target role, skill gaps and resume score. Ask for a weekly plan, resume wording or interview practice.</p>
+{% if not has_key %}<div class="flash warn">The coach is not switched on yet. Set the <b>ANTHROPIC_API_KEY</b> environment variable and restart the app.</div>{% endif %}
+<div class="card chat"><div id="log"><div class="msg bot">Hi {{ g.user['name'].split()[0] }}! I can see your gaps for <b>{{ g.user['target_role'] }}</b>. What would you like help with?</div></div>
+  <div class="chips" style="margin-bottom:10px">{% for s in sugg %}<button class="chip" type="button">{{ s }}</button>{% endfor %}</div>
+  <form id="cf" style="display:flex;gap:8px"><input id="ci" placeholder="Ask your coach..." autocomplete="off"><button class="btn">Send</button></form></div>
+<script>
+const log=document.getElementById('log'),H=[];
+function add(r,t){const d=document.createElement('div');d.className='msg '+r;d.textContent=t;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+async function send(t){t=t.trim();if(!t)return;add('user',t);H.push({role:'user',content:t});const w=add('bot','Thinking…');
+ try{const r=await fetch('{{ url_for("coach_ask") }}',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF':'{{ csrf_token() }}'},body:JSON.stringify({messages:H})});
+  const j=await r.json();w.textContent=j.reply;H.push({role:'assistant',content:j.reply})}catch(e){w.textContent='Network error. Please try again.';H.pop()}}
+document.getElementById('cf').onsubmit=e=>{e.preventDefault();const i=document.getElementById('ci');send(i.value);i.value=''};
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>send(c.textContent));
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Skill quiz{% endblock %}
+{% block body %}
+{% include "_steps.html" %}
+<h1>Skill quiz</h1>
+<p class="sub">One question at a time. Skip any you are unsure of; unanswered skills keep their self-rating.</p>
+<form method="post"><input type="hidden" name="_csrf" value="{{ csrf_token() }}">
+<div class="card">
+  <div class="bar"><i id="pg" style="width:0"></i></div>
+  <div class="small mute" style="display:flex;justify-content:space-between;margin:8px 0 14px"><span id="cnt"></span><span> <b id="tm">0:00</b></span></div>
+  {% for sk in skills %}{% for q, opts, ans in bank[sk] %}{% set qi = loop.index0 %}
+  <div class="qcard" hidden><span class="pill mute">{{ sk }}</span><h2 style="margin-top:8px">{{ q }}</h2>
+    {% for o in opts %}<label class="opt"><input type="radio" name="q_{{ sk }}_{{ qi }}" value="{{ loop.index0 }}">{{ o }}</label>{% endfor %}</div>
+  {% endfor %}{% endfor %}
+  <p style="display:flex;gap:8px;margin-bottom:0"><button type="button" class="btn ghost" id="pv">← Back</button><button type="button" class="btn" id="nx">Next →</button><button class="btn" id="sub" hidden>Submit quiz</button></p>
+</div></form>
+<script>
+const Q=[...document.querySelectorAll('.qcard')],$=id=>document.getElementById(id),t0=Date.now();let i=0;
+function show(){Q.forEach((c,k)=>c.hidden=k!==i);$('cnt').textContent=`Question ${i+1} of ${Q.length}`;$('pg').style.width=(100*(i+1)/Q.length)+'%';$('pv').disabled=i==0;$('nx').hidden=i==Q.length-1;$('sub').hidden=i!=Q.length-1}
+$('nx').onclick=()=>{i++;show()};$('pv').onclick=()=>{i--;show()};
+setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);$('tm').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0')},500);
+if(Q.length)show();
+</script>
+{% endblock %}
